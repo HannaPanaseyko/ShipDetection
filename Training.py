@@ -30,15 +30,15 @@ IMAGES_PATH = "train_v2"
 CSV_PATH = "train_ship_segmentations_v2.csv"
 
 # path to the reference image for vusualization of the model performance after each epoch
-REFERENCE_IMAGE_PATH = "ShipDetection/train_v2/000155de5.jpg"
+REFERENCE_IMAGE_PATH = "train_v2/00a52cd2a.jpg"
 
 EPOCHS = 5
 BATCH_SIZE = 32
 OUTPUT_CLASSES = 1
-VALIDATION_SPLIT = 0.05
-FILE_LIMIT = None
-IMAGES_LIMIT = None
-MASKED_ONLY = False
+VALIDATION_SPLIT = 0.03
+FILE_LIMIT = 100 # imageg files limit for loadin
+IMAGES_LIMIT = None # max number of images to use (after MASKED_ONLY filter)
+MASKED_ONLY = False # use only images with masks
 MODEL_FILE = "model.keras"
 
 def main():
@@ -65,7 +65,14 @@ def main():
         validation_steps=len(val_generator),
         callbacks=[DisplayCallback(model, REFERENCE_IMAGE_PATH, mask_data, True), model_checkpoint_callback],
     )
-
+    # model_history = model.fit(
+    #     train_generator,
+    #     epochs=EPOCHS,
+    #     steps_per_epoch=len(train_generator),
+    #     validation_data=val_generator,
+    #     validation_steps=len(val_generator),
+    #     callbacks=[model_checkpoint_callback],
+    # )
 
     model.save(MODEL_FILE)
 

@@ -1,3 +1,10 @@
+This is a Python project for solving kaggle task Airbus Ship Detection. I used Machine Learning approach with Tensorflow and Keras.
+For decreasing time for training images are doswscaled to 128x128.
+
+Key features:
+- uses all images, no additional classification of if there is a ship on image
+- uses U-Net architecture
+
 Create virtual environment
 
 Install all requirements
