@@ -20,8 +20,7 @@ class DisplayCallback(tf.keras.callbacks.Callback):
         #  return
         print('\nSample Prediction after epoch {}\n'.format(epoch + 1))
         clear_output(wait=True)
-        input_image = plt.imread(self.image_path)
-        input_image = cv2.resize(input_image, (128, 128), interpolation=cv2.INTER_AREA)
+        input_image = keras.utils.img_to_array(keras.utils.load_img(self.image_path, target_size=(128, 128))) / 255.0
         predicted_mask = self.model.predict(np.expand_dims(input_image, axis=0))
         mask_info = self.csv_data[self.csv_data['ImageId'] == '00a52cd2a.jpg']['EncodedPixels'].values
         combined_mask = ' '.join(mask_info)
@@ -30,10 +29,10 @@ class DisplayCallback(tf.keras.callbacks.Callback):
         predicted_mask_uint8 = (predicted_mask[0] * 255).astype(np.uint8)
 
         if self.save:
-            cv2.imwrite("predicted_mask" + str(epoch) + ".png", predicted_mask_uint8)
+            cv2.imwrite("predicted_mask_" + str(epoch) + ".png", predicted_mask_uint8)
         
-        mask_for_show = self.__create_mask(predicted_mask)
-        self.__display([input_image, expected_mask, mask_for_show])
+        #mask_for_show = self.__create_mask(predicted_mask)
+        #self.__display([input_image, expected_mask, mask_for_show])
         
     def __display(self, display_list):
         plt.figure(figsize=(15, 15))

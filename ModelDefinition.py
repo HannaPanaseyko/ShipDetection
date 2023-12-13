@@ -3,39 +3,8 @@ from tensorflow_examples.models.pix2pix import pix2pix
 import keras
 from keras import Model, layers
 
-def double_conv_block(x, n_filters):
-    # Conv2D then ReLU activation
-    x = layers.Conv2D(
-        n_filters, 3, padding="same", activation="relu", kernel_initializer="he_normal"
-    )(x)
-    # Conv2D then ReLU activation
-    x = layers.Conv2D(
-        n_filters, 3, padding="same", activation="relu", kernel_initializer="he_normal"
-    )(x)
-    return x
-
-
-def downsample_block(x, n_filters):
-    f = double_conv_block(x, n_filters)
-    p = layers.MaxPool2D(2)(f)
-    p = layers.Dropout(0.3)(p)
-    return f, p
-
-
-def upsample_block(x, conv_features, n_filters):
-    # upsample
-    x = layers.Conv2DTranspose(n_filters, 3, 2, padding="same")(x)
-    # concatenate
-    x = layers.concatenate([x, conv_features])
-    # dropout
-    x = layers.Dropout(0.3)(x)
-    # Conv2D twice with ReLU activation
-    x = double_conv_block(x, n_filters)
-    return x
-
-
 def create_unet_model(output_channels: int):
-    inputs = tf.keras.layers.Input(shape=[128, 128, 3])
+    inputs = keras.layers.Input(shape=[128, 128, 3])
 
     base_model: keras.Model = tf.keras.applications.MobileNetV2(
         input_shape=[128, 128, 3], include_top=False
@@ -75,10 +44,10 @@ def create_unet_model(output_channels: int):
         x = concat([x, skip])
 
     # Add batch normalization layer
-    x = tf.keras.layers.BatchNormalization()(x)
+    x = keras.layers.BatchNormalization()(x)
 
     # This is the last layer of the model
-    last = tf.keras.layers.Conv2DTranspose(
+    last = keras.layers.Conv2DTranspose(
         filters=output_channels,
         kernel_size=3,
         strides=2,
@@ -88,4 +57,4 @@ def create_unet_model(output_channels: int):
 
     x = last(x)
 
-    return tf.keras.Model(inputs=inputs, outputs=x)
+    return keras.Model(inputs=inputs, outputs=x)
