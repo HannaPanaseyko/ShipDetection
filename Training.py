@@ -40,6 +40,7 @@ FILE_LIMIT = 100 # imageg files limit for loadin
 IMAGES_LIMIT = None # max number of images to use (after MASKED_ONLY filter)
 MASKED_ONLY = False # use only images with masks
 MODEL_FILE = "model.keras"
+AUGMENTATION_AMOUNT = 4
 
 def main():
     print("Creating model...")
@@ -65,14 +66,6 @@ def main():
         validation_steps=len(val_generator),
         callbacks=[DisplayCallback(model, REFERENCE_IMAGE_PATH, mask_data, True), model_checkpoint_callback],
     )
-    # model_history = model.fit(
-    #     train_generator,
-    #     epochs=EPOCHS,
-    #     steps_per_epoch=len(train_generator),
-    #     validation_data=val_generator,
-    #     validation_steps=len(val_generator),
-    #     callbacks=[model_checkpoint_callback],
-    # )
 
     model.save(MODEL_FILE)
 
@@ -97,10 +90,10 @@ def create_generators(dataset_path: str, mask_data: TextFileReader, batch_size: 
         image_filenames = image_filenames[:IMAGES_LIMIT]
         print(f"Using only {IMAGES_LIMIT} images")
 
-    train_generator = CustomDataGenerator(image_filenames, mask_data, batch_size, validation_split, dataset_path)
+    train_generator = CustomDataGenerator(image_filenames, mask_data, batch_size, validation_split, dataset_path, AUGMENTATION_AMOUNT)
     train_generator.set_mode("train")
 
-    val_generator = CustomDataGenerator(image_filenames, mask_data, batch_size, 1 - validation_split, dataset_path)
+    val_generator = CustomDataGenerator(image_filenames, mask_data, batch_size, 1 - validation_split, dataset_path, AUGMENTATION_AMOUNT)
     val_generator.set_mode("val")
 
     return train_generator, val_generator
