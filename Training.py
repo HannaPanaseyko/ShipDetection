@@ -11,14 +11,18 @@ from CustomDataGenerator import CustomDataGenerator
 from DisplayCallback import DisplayCallback
 
 from PIL import ImageFile
-
+print(tf.__version__)
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from ModelDefinition import create_unet_model
+from DataLoading import load_masks_csv
 
 gpus = tf.config.experimental.list_physical_devices("GPU")
 tf.config.experimental.set_memory_growth(gpus[0], True)
-
+tf.config.set_logical_device_configuration(
+        gpus[0],
+        [tf.config.LogicalDeviceConfiguration(memory_limit=1150)]
+    )
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
@@ -30,16 +34,18 @@ IMAGES_PATH = "train_v2"
 CSV_PATH = "train_ship_segmentations_v2.csv"
 
 # path to the reference image for vusualization of the model performance after each epoch
-REFERENCE_IMAGE_PATH = "train_v2/00a52cd2a.jpg"
+REFERENCE_IMAGE_NAME = "train_v2/00a52cd2a.jpg"
 
 EPOCHS = 5
-BATCH_SIZE = 32
+BATCH_SIZE = 10
 OUTPUT_CLASSES = 1
-VALIDATION_SPLIT = 0.03
-FILE_LIMIT = 100 # imageg files limit for loadin
+VALIDATION_SPLIT = 0.001
+FILE_LIMIT = None # imageg files limit for loadin
 IMAGES_LIMIT = None # max number of images to use (after MASKED_ONLY filter)
 MASKED_ONLY = False # use only images with masks
-MODEL_FILE = "model.keras"
+MODEL_FILE = "model768_1.keras"
+AUGMENTATION_AMOUNT = 4
+
 def main():
     print("Creating model...")
     model = create_unet_model(OUTPUT_CLASSES)
@@ -49,22 +55,18 @@ def main():
     utils.plot_model(model, show_shapes=True)
 
     print("Creating generators...")
-    types = {"ImageId": "str", "EncodedPixels": "str"}
-    mask_data = pd.read_csv(CSV_PATH, dtype=types, keep_default_na=False)
+    mask_data = load_masks_csv(CSV_PATH)
     train_generator, val_generator = create_generators(IMAGES_PATH, mask_data, BATCH_SIZE, VALIDATION_SPLIT)
     print("Generators created")
 
-    model_checkpoint_callback = keras.callbacks.ModelCheckpoint(filepath="checkpoint.keras", monitor="val_accuracy", mode="max", save_weights_only=False, save_best_only=True)
+    model_checkpoint_callback = keras.callbacks.ModelCheckpoint(filepath="checkpoint768.keras", monitor="val_accuracy", mode="max", save_weights_only=False, save_best_only=True)
 
     model_history = model.fit(
         train_generator,
         epochs=EPOCHS,
-        steps_per_epoch=len(train_generator),
         validation_data=val_generator,
-        validation_steps=len(val_generator),
-        callbacks=[DisplayCallback(model, REFERENCE_IMAGE_PATH, mask_data, True), model_checkpoint_callback],
+        callbacks=[DisplayCallback(model,IMAGES_PATH,  REFERENCE_IMAGE_NAME, mask_data, True), model_checkpoint_callback],
     )
-
     model.save(MODEL_FILE)
 
     plot_history(model_history)
@@ -90,7 +92,7 @@ def create_generators(dataset_path: str, mask_data: TextFileReader, batch_size: 
 
     train_generator = CustomDataGenerator(image_filenames, mask_data, batch_size, 1 - validation_split, dataset_path)
     val_generator = CustomDataGenerator(image_filenames, mask_data, batch_size, validation_split, dataset_path)
-
+    
     return train_generator, val_generator
 
 

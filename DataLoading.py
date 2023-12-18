@@ -1,12 +1,11 @@
 import numpy as np
 import keras
-import os
-import cv2
+import pandas as pd
 
 img_height = 768
 img_width = 768
 
-def rle_to_mask(rle, shape = (img_height, img_width, 1)):
+def rle_to_mask(rle, shape = (img_height, img_width, 1)) -> np.ndarray:
     array = np.zeros(shape, dtype=float).flatten()
     splitted = split_rle(rle)
     for (start, length) in splitted:
@@ -21,7 +20,7 @@ def rle_to_mask(rle, shape = (img_height, img_width, 1)):
     #mirrored = 1 - mirrored
     return mirrored
 
-def split_rle(rle_string):
+def split_rle(rle_string) -> list:
     # Split the RLE string into individual characters
     rle_chars = rle_string.split()
 
@@ -41,24 +40,23 @@ def split_rle(rle_string):
 
     return pairs
 
-def load_image_and_mask(image_path, mask_data):
-    image = keras.utils.img_to_array(keras.utils.load_img(image_path, target_size=(128, 128))) / 255.0
-    image_name = os.path.basename(image_path)
+def load_image_and_mask(images_path, image_name, mask_data) -> (np.ndarray, np.ndarray):
+    image = read_image(images_path, image_name)
+    mask = get_mask(mask_data, image_name)
     
-    # Find the corresponding mask data in the CSV file
+    return image, mask
+
+def get_mask(mask_data, image_name) -> np.ndarray:
     mask_info = mask_data[mask_data['ImageId'] == image_name]['EncodedPixels'].values
-
     mask = rle_to_mask(mask_info[0])
+    return mask
 
-    
-    # Convert mask from grayscale to RGB
-   # mask_rgb = np.repeat(mask, 3, axis=2)
 
-    #downscaled_image = cv2.resize(image, (128, 128),  interpolation=cv2.INTER_AREA)
-    downscaled_mask = cv2.resize(mask, (128, 128), interpolation=cv2.INTER_AREA)
-    # (128, 128) -> (128, 128, 1)
-    #downscaled_mask = np.expand_dims(mask, axis=2)
-    #downscaled_mask = np.repeat(downscaled_mask, 3, axis=2)
-    downscaled_mask = downscaled_mask.reshape((128, 128, 1))
-    
-    return image, downscaled_mask
+def load_masks_csv(CSV_PATH) -> pd.DataFrame:
+    types = {"ImageId": "str", "EncodedPixels": "str"}
+    mask_data = pd.read_csv(CSV_PATH, dtype=types, keep_default_na=False)
+    return mask_data
+
+
+def read_image(images_path, image_name) -> np.ndarray:
+    return keras.utils.img_to_array(keras.utils.load_img(images_path +"/" + image_name, target_size=(768, 768))) / 255.0

@@ -1,13 +1,12 @@
 import tensorflow as tf
 from tensorflow_examples.models.pix2pix import pix2pix
 import keras
-from keras import Model, layers
 
 def create_unet_model(output_channels: int):
-    inputs = keras.layers.Input(shape=[128, 128, 3])
+    inputs = keras.layers.Input(shape=[768, 768, 3])
 
     base_model: keras.Model = tf.keras.applications.MobileNetV2(
-        input_shape=[128, 128, 3], include_top=False
+        input_shape=[768, 768, 3], include_top=False
     )
 
     # Use the activations of these layers
@@ -21,7 +20,7 @@ def create_unet_model(output_channels: int):
     base_model_outputs = [base_model.get_layer(name).output for name in layer_names]
 
     # Create the feature extraction model
-    down_stack = Model(inputs=base_model.input, outputs=base_model_outputs)
+    down_stack = keras.Model(inputs=base_model.input, outputs=base_model_outputs)
 
     down_stack.trainable = False
 

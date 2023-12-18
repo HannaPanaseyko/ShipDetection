@@ -1,7 +1,7 @@
 from tensorflow import keras
 import os
 import numpy as np
-from ImageMaskLoading import load_image_and_mask
+from DataLoading import load_image_and_mask
 import keras
 import keras.preprocessing.image
 from keras.preprocessing.image import ImageDataGenerator

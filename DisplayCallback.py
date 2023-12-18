@@ -1,4 +1,4 @@
-from ImageMaskLoading import rle_to_mask
+from DataLoading import read_image, get_mask
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,8 +8,9 @@ import keras
 from pandas.io.parsers import TextFileReader
 
 class DisplayCallback(tf.keras.callbacks.Callback):
-    def __init__(self, model: keras.Model, image_path: str, csv_data: TextFileReader, save=False, ):
-        self.image_path = image_path
+    def __init__(self, model: keras.Model, images_path: str, image_name: str, csv_data: TextFileReader, save=False, ):
+        self.images_path = images_path
+        self.image_name = image_name
         self.model = model
         self.csv_data = csv_data
         self.save = save
@@ -20,16 +21,17 @@ class DisplayCallback(tf.keras.callbacks.Callback):
         #  return
         print('\nSample Prediction after epoch {}\n'.format(epoch + 1))
         clear_output(wait=True)
-        input_image = keras.utils.img_to_array(keras.utils.load_img(self.image_path, target_size=(128, 128))) / 255.0
+        input_image = read_image(self.images_path, self.image_name)
+        
         predicted_mask = self.model.predict(np.expand_dims(input_image, axis=0))
-        mask_info = self.csv_data[self.csv_data['ImageId'] == '00a52cd2a.jpg']['EncodedPixels'].values
-        combined_mask = ' '.join(mask_info)
-        expected_mask = rle_to_mask(combined_mask)
+        expected_mask = get_mask(self.csv_data, self.image_name)
         
         predicted_mask_uint8 = (predicted_mask[0] * 255).astype(np.uint8)
+        expected_mask_uint8 = (expected_mask * 255).astype(np.uint8)
 
         if self.save:
-            cv2.imwrite("predicted_mask_" + str(epoch) + ".png", predicted_mask_uint8)
+            cv2.imwrite("768_predicted_mask_" + str(epoch) + ".png", predicted_mask_uint8)
+            #cv2.imwrite("768/expected_mask__" + str(epoch) + ".png", expected_mask_uint8)
         
         #mask_for_show = self.__create_mask(predicted_mask)
         #self.__display([input_image, expected_mask, mask_for_show])

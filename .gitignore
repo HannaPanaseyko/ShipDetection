@@ -4,4 +4,4 @@ env/
 *.png
 *.csv
 *.keras
-!ExampleMasks/*
+!Examples/*
